@@ -53,3 +53,52 @@ class KnowledgeBase:
                     return True
         if verbose:
             print(f"{pad}'{goal}' cannot be proved  [FAIL]")
+        return False
+
+
+def build_kb():
+    kb = KnowledgeBase()
+    kb.add_rule("R1", ["fever", "cough"], "respiratory_infection")
+    kb.add_rule("R2", ["fever", "body_ache", "fatigue"], "flu_like_illness")
+    kb.add_rule("R3", ["respiratory_infection", "flu_like_illness"], "flu")
+    kb.add_rule("R4", ["cough", "sneezing", "runny_nose"], "common_cold")
+    kb.add_rule("R5", ["flu"], "needs_rest_and_fluids")
+    kb.add_rule("R6", ["flu", "breathing_difficulty"], "consult_doctor_urgently")
+    kb.add_rule("R7", ["common_cold"], "needs_rest_and_fluids")
+    return kb
+
+
+def main():
+    kb = build_kb()
+    print("=" * 60, "\nRULE-BASED EXPERT SYSTEM (Propositional Logic)\n" + "=" * 60)
+    print("Knowledge Base:")
+    kb.show()
+
+    facts = {"fever", "cough", "body_ache", "fatigue"}
+    print("\nInitial facts:", sorted(facts))
+
+    print("\n--- FORWARD CHAINING (all conclusions) ---")
+    _, derived = kb.forward_chaining(facts)
+    print("  Derived facts:", sorted(derived - facts))
+
+    goal = "flu"
+    print(f"\n--- FORWARD CHAINING (goal = '{goal}') ---")
+    ok, _ = kb.forward_chaining(facts, goal)
+    print(f"  Result: '{goal}' is {'TRUE' if ok else 'NOT derivable'}")
+
+    for g in ("flu", "consult_doctor_urgently"):
+        print(f"\n--- BACKWARD CHAINING (goal = '{g}') ---")
+        print("  Result:", "PROVED" if kb.backward_chaining(g, facts) else "NOT PROVED")
+
+    print("\n--- INTERACTIVE CONSULTATION ---")
+    symptoms = ["fever", "cough", "body_ache", "fatigue", "sneezing",
+                "runny_nose", "breathing_difficulty"]
+    user_facts = {s for s in symptoms
+                  if input(f"  Do you have {s.replace('_', ' ')}? (y/n): ").strip().lower() == "y"}
+    _, result = kb.forward_chaining(user_facts, verbose=False)
+    advice = sorted(result - user_facts)
+    print("\n  Diagnosis / advice:", ", ".join(advice) if advice else "No conclusion reached")
+
+
+if __name__ == "__main__":
+    main()
